@@ -251,4 +251,12 @@ abstract public class ReplicaInfo extends Block implements Replica {
         + "\n  getVolume()       = " + getVolume()
         + "\n  getBlockFile()    = " + getBlockFile();
   }
+
+  public void incrNumReads() {
+    metrics.incrNumReads();
+  }
+
+  public long getNumReads() {
+    return metrics.getNumReads();
+  }
 }
