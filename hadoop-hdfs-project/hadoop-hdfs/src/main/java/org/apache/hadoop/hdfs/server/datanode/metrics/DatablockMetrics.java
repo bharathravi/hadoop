@@ -23,7 +23,7 @@ import static org.apache.hadoop.hdfs.server.common.Util.now;
 
 /**
  */
-public class DatablockqMetrics {
+public class DatablockMetrics {
 
   private long numReads = 0;
   public SlidingWindowBlockMetrics window;
