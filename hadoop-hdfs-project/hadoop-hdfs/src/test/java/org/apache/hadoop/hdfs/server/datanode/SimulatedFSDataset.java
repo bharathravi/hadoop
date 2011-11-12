@@ -222,17 +222,6 @@ public class SimulatedFSDataset  implements FSDatasetInterface, Configurable{
     }
 
     @Override
-    public void incrNumReads() {
-      //TODO(bharath): This currently does nothing
-    }
-
-    @Override
-    public long getNumReads() {
-      //TODO(bharath): This currently does nothing
-      return 0;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public ReplicaState getState() {
       return null;
     }
@@ -751,6 +740,11 @@ public class SimulatedFSDataset  implements FSDatasetInterface, Configurable{
   @Override
   public BlockMetricsAsLongs getBlockMetricsReport(String blockPoolId) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void updateBlockMetrics(String blockPoolId) {
+    // DO nothing..
   }
 
   @Override

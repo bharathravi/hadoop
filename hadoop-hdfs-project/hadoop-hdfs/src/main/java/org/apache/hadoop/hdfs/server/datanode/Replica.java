@@ -54,16 +54,4 @@ public interface Replica {
    * @return the number of bytes that are visible to readers
    */
   public long getVisibleLength();
-
-
-/** Get Read/Write metrics for this replica
-   *
-   * @return the DatablockMetrics object of these metrics
-   */
-  //public DatablockMetrics getMetrics();
-
-  public void incrNumReads();
-
-  public long getNumReads();
-
 }
