@@ -73,12 +73,12 @@ public class DataNodeMetrics {
   @Metric MutableRate replaceBlockOp;
   @Metric MutableRate heartbeats;
   @Metric MutableRate blockReports;
-  public SlidingWindowMetrics window;
+  public SlidingWindowDatanodeMetrics window;
 
   /**
    *  Approximately maintains the number of read requests per second.
    */
-  public class SlidingWindowMetrics {
+  public class SlidingWindowDatanodeMetrics {
     // Over what period do we calculate threshold?
     // Too small = too rapidly changing threshold, too large = not quick enough.
     // windowSize * recalculationFrequency gives the total time frame over which a load
@@ -111,7 +111,7 @@ public class DataNodeMetrics {
       return writesPerSecond;
     }
 
-    SlidingWindowMetrics() {
+    SlidingWindowDatanodeMetrics() {
       readsPerSecond = 0;
       prevReadCounts = new LinkedList<Long>();
       prevWriteCounts = new LinkedList<Long>();
@@ -153,7 +153,7 @@ public class DataNodeMetrics {
         }
 
         prevReadCounts.add(readsNow);
-        prevReadCounts.add(writesNow);
+        prevWriteCounts.add(writesNow);
         prevTimes.add(timeNow);
       }
     }
@@ -164,7 +164,7 @@ public class DataNodeMetrics {
 
   public DataNodeMetrics(String name, String sessionId) {
     this.name = name;
-    this.window = new SlidingWindowMetrics();
+    this.window = new SlidingWindowDatanodeMetrics();
     registry.tag(SessionId, sessionId);
   }
 

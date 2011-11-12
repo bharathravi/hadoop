@@ -1131,6 +1131,8 @@ public class DataNode extends Configured
     DatanodeCommand [] sendHeartBeat() throws IOException {
       // On every heartbeat, do housekeeping by advancing the sliding window
       metrics.window.advanceWindow();
+      data.updateBlockMetrics(blockPoolId);
+
       if (metrics.blocksRead != null) {
         LOG.info("Read load is " + (long)(metrics.window.getReadsPerSecond() * 1000000) +
         " prevreads: " +  metrics.window.prevReads + " prevtime - now(): " + (now() - metrics.window.prevTime)

@@ -94,9 +94,9 @@ public class DatanodeProtocolServerSideTranslatorR23 implements
 
   @Override
   public DatanodeCommandWritable blockMetricsReport(DatanodeRegistrationWritable registration,
-                                                    String blockPoolId, MetricsReport blockMetrics)
-      throws IOException {
-    return DatanodeCommandHelper.convert(server.metricsReport(
+                                                    String blockPoolId,
+                                                    long[] blockMetrics) throws IOException {
+     return DatanodeCommandHelper.convert(server.metricsReport(
         registration.convert(), blockPoolId, blockMetrics));
   }
 

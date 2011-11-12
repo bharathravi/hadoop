@@ -1346,7 +1346,6 @@ public class BlockManager {
       this.storedBlock = storedBlock;
       this.reportedState = reportedState;
     }
-
   }
 
   /**

@@ -27,7 +27,7 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.HardLink;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.server.datanode.FSDataset.FSVolume;
-import org.apache.hadoop.hdfs.server.datanode.metrics.BlockMetrics;
+import org.apache.hadoop.hdfs.server.datanode.metrics.DatablockMetrics;
 import org.apache.hadoop.io.IOUtils;
 
 /**
@@ -38,7 +38,7 @@ import org.apache.hadoop.io.IOUtils;
 abstract public class ReplicaInfo extends Block implements Replica {
   private FSVolume volume;      // volume where the replica belongs
   private File     dir;         // directory where block & meta files belong
-  private BlockMetrics metrics;
+  public DatablockMetrics metrics;
 
   /**
    * Constructor for a zero length replica
@@ -75,7 +75,7 @@ abstract public class ReplicaInfo extends Block implements Replica {
     super(blockId, len, genStamp);
     this.volume = vol;
     this.dir = dir;
-    this.metrics = new BlockMetrics();
+    this.metrics = new DatablockMetrics();
   }
 
   /**
@@ -251,16 +251,4 @@ abstract public class ReplicaInfo extends Block implements Replica {
         + "\n  getVolume()       = " + getVolume()
         + "\n  getBlockFile()    = " + getBlockFile();
   }
-
-  public void incrNumReads() {
-     metrics.incrNumReads();
-   }
-
-   public long getNumReads() {
-     return metrics.getNumReads();
-   }
-
-   public void resetMetrics() {
-    metrics.setNumReads(0);
-   }
 }

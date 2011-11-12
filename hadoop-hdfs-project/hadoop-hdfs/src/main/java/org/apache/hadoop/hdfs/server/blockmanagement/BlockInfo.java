@@ -19,7 +19,7 @@ package org.apache.hadoop.hdfs.server.blockmanagement;
 
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.BlockUCState;
-import org.apache.hadoop.hdfs.server.datanode.metrics.BlockMetrics;
+import org.apache.hadoop.hdfs.server.datanode.metrics.DatablockMetrics;
 import org.apache.hadoop.hdfs.server.namenode.INodeFile;
 import org.apache.hadoop.hdfs.util.LightWeightGSet;
 
@@ -41,7 +41,7 @@ public class BlockInfo extends Block implements LightWeightGSet.LinkedElement {
    * list of blocks belonging to this data-node.
    */
   private Object[] triplets;
-  public BlockMetrics metrics;
+  public DatablockMetrics metrics;
 
   /**
    * Construct an entry for blocksmap
@@ -50,14 +50,14 @@ public class BlockInfo extends Block implements LightWeightGSet.LinkedElement {
   public BlockInfo(int replication) {
     this.triplets = new Object[3*replication];
     this.inode = null;
-    this.metrics = new BlockMetrics();
+    this.metrics = new DatablockMetrics();
   }
   
   public BlockInfo(Block blk, int replication) {
     super(blk);
     this.triplets = new Object[3*replication];
     this.inode = null;
-    this.metrics = new BlockMetrics();
+    this.metrics = new DatablockMetrics();
   }
 
   /**

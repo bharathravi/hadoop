@@ -208,6 +208,19 @@ public class DatanodeManager {
     // For every load that is above the threshold load, demote it to behind
     // an unloaded node, while preserving location preference among loaded
     // and unloaded nodes
+
+    for (int i = locations.length-1; i >=0; --i) {
+      DatanodeInfo current = locations[i];
+      double threshold = 10;
+      if (current.getReadLoad() > threshold) {
+        int j = i;
+        while (j+1<locations.length && locations[j+1].getReadLoad() < threshold) {
+          swap(locations, j, j+1);
+          j++;
+        }
+      }
+    }
+
   }
 
   /* swap two array items */

@@ -13,7 +13,7 @@ import static java.lang.Math.abs;
  * Time: 9:21 AM
  *
  * Creates an overall Metrics report by combining details from the
- * DataNode metrics and a BlockMetrics report.
+ * DataNode metrics and a DatablockMetrics report.
  */
 public class MetricsReport {
   public long[] blockMetricsReport;

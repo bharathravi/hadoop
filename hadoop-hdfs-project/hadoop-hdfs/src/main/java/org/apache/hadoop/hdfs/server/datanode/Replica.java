@@ -58,9 +58,9 @@ public interface Replica {
 
 /** Get Read/Write metrics for this replica
    *
-   * @return the BlockMetrics object of these metrics
+   * @return the DatablockMetrics object of these metrics
    */
-  //public BlockMetrics getMetrics();
+  //public DatablockMetrics getMetrics();
 
   public void incrNumReads();
 

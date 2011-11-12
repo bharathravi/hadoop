@@ -45,8 +45,7 @@ import org.apache.hadoop.util.DiskChecker.DiskErrorException;
  */
 @InterfaceAudience.Private
 public interface FSDatasetInterface extends FSDatasetMBean {
-  
-  
+
   /**
    * Returns the length of the metadata file of the specified block
    * @param b - the block for which the metadata length is desired
@@ -56,6 +55,7 @@ public interface FSDatasetInterface extends FSDatasetMBean {
   public long getMetaDataLength(ExtendedBlock b) throws IOException;
 
   BlockMetricsAsLongs getBlockMetricsReport(String blockPoolId);
+  public void updateBlockMetrics(String blockPoolId);
 
   void resetMetrics(String blockPoolId);
 
