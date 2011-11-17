@@ -235,11 +235,13 @@ public class DataNodeCluster {
     }
     
     int rand = 0;
-    try {
+    // TODO(bharath): Removing this randomness because it cannot be used on a
+    // VM
+   /* try {
       rand = SecureRandom.getInstance("SHA1PRNG").nextInt(Integer.MAX_VALUE);
     } catch (NoSuchAlgorithmException e) {
       rand = (new Random()).nextInt(Integer.MAX_VALUE);
-    }
+    }*/
     return "/Rack-" + rand + "-"+ ip  + "-" + 
                       System.currentTimeMillis();
   }

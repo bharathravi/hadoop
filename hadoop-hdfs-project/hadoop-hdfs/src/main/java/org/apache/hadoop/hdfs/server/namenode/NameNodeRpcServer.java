@@ -798,18 +798,18 @@ class NameNodeRpcServer implements NamenodeProtocols {
 @Override
   public DatanodeCommand metricsReport(DatanodeRegistration nodeReg,
                                        String blockPoolId,
-                                       long[] metricsReport) throws IOException {
+                                       long[] metricsReportAsLongs) throws IOException {
     verifyRequest(nodeReg);
-    MetricsReport metrics = new MetricsReport(metricsReport);
+    MetricsReport metrics = new MetricsReport(metricsReportAsLongs);
 
     BlockMetricsAsLongs x =
         new BlockMetricsAsLongs(metrics.blockMetricsReport);
 
-    if(stateChangeLog.isDebugEnabled()) {
-      stateChangeLog.debug("*BLOCK* NameNode.metricsReport: "
+
+      stateChangeLog.info("*BLOCK* NameNode.metricsReport: "
            + "from " + nodeReg.getName() + " " + x.getNumberOfBlocks()
-           + " blocks");
-    }
+           + " blocks and:" + metrics.readLoad + " and: " + metricsReportAsLongs[0]);
+
 
     // Process blockwise metrics.
     namesystem.getBlockManager().processMetricsReport(nodeReg, blockPoolId, x);

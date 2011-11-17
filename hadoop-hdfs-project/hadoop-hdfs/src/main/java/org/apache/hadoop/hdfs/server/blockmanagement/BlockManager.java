@@ -1314,7 +1314,7 @@ public class BlockManager {
             long readCount = it.getCurrentReadCount();
             NameNode.stateChangeLog.info(count + " BLOCK* processMetricsReport: "
                             + "block " + b.getBlockId() + "has been read "
-                            + readCount + " times");
+                            + readCount + " times. current load:" + it.getCurrentReadLoad());
 
             blocksMap.getStoredBlock(b).metrics.setNumReads(readCount);
             count++;

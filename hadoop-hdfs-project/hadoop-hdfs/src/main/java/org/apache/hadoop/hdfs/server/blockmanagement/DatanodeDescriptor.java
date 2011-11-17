@@ -298,7 +298,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
   /**
    * Updates stats received from a metrics report from a datanode
    */
-  public void updateMetricsReport(double readLoad, double writeLoad) {
+  public void updateFromMetricsReport(double readLoad, double writeLoad) {
     this.readLoad = readLoad;
     this.writeLoad = writeLoad;
   }

@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hdfs.server.datanode.metrics;
 
+import org.apache.commons.logging.Log;
+
 import java.util.LinkedList;
 
 import static org.apache.hadoop.hdfs.server.common.Util.now;
@@ -63,8 +65,8 @@ public class DatablockMetrics {
     // Too small = too rapidly changing threshold, too large = not quick enough.
     // windowSize * recalculationFrequency gives the total time frame over which a load
     // is calculated. Window size = 1 means load is calculated over the time-period = recalculation frequency.
-    // For now, windowSize = 1.
-    public long windowSizeInSeconds;
+    // For now, windowSize = 3.
+    public long windowSizeInSeconds = 4;
 
     LinkedList<Long> prevReadCounts;
     LinkedList<Long> prevTimes;
@@ -82,6 +84,10 @@ public class DatablockMetrics {
       return readsPerSecond;
     }
 
+    public Long getReadsPerSecondAsLong() {
+      return (long)(readsPerSecond*1000000);
+    }
+
     SlidingWindowBlockMetrics() {
       readsPerSecond = 0;
       prevReadCounts = new LinkedList<Long>();
@@ -91,25 +97,30 @@ public class DatablockMetrics {
       prevTimes.add(now());
     }
 
-    public void advanceWindow() {
+    public void advanceWindow(Log log) {
       long timeNow = now();
       long lastCalculatedTime = prevTimes.getLast();
 
       // Don't recalculate load too often.
       if (timeNow - lastCalculatedTime > recalculationFrequencyInSeconds *1000) {
         long readsNow = 0;
-        long writesNow = 0;
         readsNow = numReads;
 
-        prevTime = prevTimes.getFirst();
-        prevReads = prevReadCounts.getFirst();
+        log.info("prevReads:" + prevReads + " prev time:" + prevTime
+                      + " readsnow:" + readsNow + " timenow:" + timeNow + " windowsize:" + prevReadCounts.size());
 
-        readsPerSecond = 1000 * (double) (readsNow - prevReads) / (double) (timeNow - prevTime);
+        if (prevReadCounts.size() >= windowSizeInSeconds) {
+          // If the window has been built up, then calculate load for this window
+          prevTime = prevTimes.getFirst();
+          prevReads = prevReadCounts.getFirst();
+          readsPerSecond = 1000 * (double) (readsNow - prevReads) / (double) (timeNow - prevTime);
 
-        // Slide the window, by adding new values and removing old ones
-        if (prevReadCounts.size() >= windowSizeInSeconds/recalculationFrequencyInSeconds) {
+          // Slide the window, by adding new values and removing old ones
           prevReadCounts.remove();
           prevTimes.remove();
+        } else {
+          // If the window has not yet increased to its max size, current load = total reads/total time
+          readsPerSecond = 1000 * (double) (readsNow - 0) / (double) (timeNow - prevTime);
         }
 
         prevReadCounts.add(readsNow);

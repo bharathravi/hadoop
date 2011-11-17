@@ -20,7 +20,9 @@ package org.apache.hadoop.hdfs.protocol;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.ReplicaState;
+import org.apache.hadoop.hdfs.server.datanode.ReplicaInfo;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -45,10 +47,11 @@ import java.util.List;
 @InterfaceStability.Evolving
 public class BlockMetricsAsLongs implements Iterable<Block> {
   /**
-   * A finalized block as 3 longs
-   *   block-id and block length and generation stamp
+   * A block metric has 5 longs
+   *   block-id and block length and generation stamp,
+   *   read counts and read-load.
    */
-  private static final int LONGS_PER_BLOCK = 4;
+  private static final int LONGS_PER_BLOCK = 5;
 
   /** Number of longs in the header */
   private static final int HEADER_SIZE = 1;
@@ -73,8 +76,7 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
    *
    * @param replicas - list of finalized blocks
    */
-  public BlockMetricsAsLongs(final List<? extends Block> replicas,
-                             final List<Long> reads) {
+  public BlockMetricsAsLongs(final List<ReplicaInfo> replicas) {
     int replicaSize = replicas == null ? 0 : replicas.size();
     int len = HEADER_SIZE
               + (replicaSize) * LONGS_PER_BLOCK;
@@ -86,13 +88,12 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
 
     // set finalized blocks
     for (int i = 0; i < replicaSize; i++) {
-      setBlock(i, replicas.get(i), reads.get(i));
+      setBlock(i, replicas.get(i),
+          replicas.get(i).metrics.getNumReads(),
+          replicas.get(i).metrics.window.getReadsPerSecondAsLong());
     }
   }
 
-  public BlockMetricsAsLongs() {
-    this(null);
-  }
 
   /**
    * Constructor
@@ -119,7 +120,6 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
   public class BlockReportIterator implements Iterator<Block> {
     private int currentBlockIndex;
     private Block block;
-    private long readCounts;
 
     BlockReportIterator() {
       this.currentBlockIndex = 0;
@@ -134,13 +134,16 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
       block.set(blockId(currentBlockIndex),
                 blockLength(currentBlockIndex),
                 blockGenerationStamp(currentBlockIndex));
-      readCounts = readCounts(currentBlockIndex);
       currentBlockIndex++;
       return block;
     }
 
     public long getCurrentReadCount() {
       return readCounts(currentBlockIndex);
+    }
+
+    public long getCurrentReadLoad() {
+      return readLoad(currentBlockIndex);
     }
 
     public void remove() {
@@ -199,6 +202,10 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
     return blockList[index2BlockId(index) + 3];
   }
 
+  private long readLoad(int index) {
+    return blockList[index2BlockId(index) + 4];
+  }
+
 
 
   /**
@@ -246,12 +253,14 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
    * @param b - the block is set to the value of the this block
    * @param readCount
    */
-  private <T extends Block> void setBlock(final int index, final T b, Long readCount) {
+  private void setBlock(final int index, final ReplicaInfo b, Long readCount,
+                        Long readLoad) {
     int pos = index2BlockId(index);
     blockList[pos] = b.getBlockId();
     blockList[pos + 1] = b.getNumBytes();
     blockList[pos + 2] = b.getGenerationStamp();
     blockList[pos + 3] = readCount;
+    blockList[pos + 4] = readLoad;
     if(index < getNumberOfBlocks())
       return;
   }

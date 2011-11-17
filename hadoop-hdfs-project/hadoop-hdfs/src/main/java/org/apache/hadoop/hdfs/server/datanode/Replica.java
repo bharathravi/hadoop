@@ -56,14 +56,14 @@ public interface Replica {
   public long getVisibleLength();
 
 
-/** Get Read/Write metrics for this replica
+  /** Get Read/Write metrics for this replica
    *
    * @return the DatablockMetrics object of these metrics
    */
   //public DatablockMetrics getMetrics();
 
-  public void incrNumReads();
+//  public void incrNumReads();
 
-  public long getNumReads();
+//  public long getNumReads();
 
 }

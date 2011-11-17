@@ -43,6 +43,7 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
 
+import org.apache.commons.logging.Log;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.DF;
@@ -1104,7 +1105,7 @@ public class FSDataset implements FSDatasetInterface {
     ArrayList<Long> reads = new ArrayList<Long>();
 
     if (size == 0) {
-      return new BlockMetricsAsLongs(replicas, reads);
+      return new BlockMetricsAsLongs(replicas);
     }
 
     synchronized(this) {
@@ -1115,7 +1116,7 @@ public class FSDataset implements FSDatasetInterface {
           case RWR:
           case RUR:
             replicas.add(b);
-            reads.add(b.getNumReads());
+            reads.add(b.metrics.getNumReads());
 
           case TEMPORARY:
             break;
@@ -1124,14 +1125,14 @@ public class FSDataset implements FSDatasetInterface {
         }
       }
 
-      return new BlockMetricsAsLongs(replicas, reads);
+      return new BlockMetricsAsLongs(replicas);
     }
   }
 
-  public void updateBlockMetrics(String bpid) {
+  public void updateBlockMetrics(String bpid, Log log) {
     synchronized(this) {
       for (ReplicaInfo b : volumeMap.replicas(bpid)) {
-        b.metrics.window.advanceWindow();
+        b.metrics.window.advanceWindow(log);
       }
     }
   }
@@ -1349,8 +1350,7 @@ public class FSDataset implements FSDatasetInterface {
    * @throws ReplicaNotFoundException if no entry is in the map or 
    *                        there is a generation stamp mismatch
    */
-  private ReplicaInfo getReplicaInfo(ExtendedBlock b)
-      throws ReplicaNotFoundException {
+  public ReplicaInfo getReplicaInfo(ExtendedBlock b) throws ReplicaNotFoundException {
     ReplicaInfo info = volumeMap.get(b.getBlockPoolId(), b.getLocalBlock());
     if (info == null) {
       throw new ReplicaNotFoundException(

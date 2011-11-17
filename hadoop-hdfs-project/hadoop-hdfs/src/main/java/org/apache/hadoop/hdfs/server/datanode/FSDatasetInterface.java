@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.apache.commons.logging.Log;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.protocol.BlockMetricsAsLongs;
@@ -55,7 +56,7 @@ public interface FSDatasetInterface extends FSDatasetMBean {
   public long getMetaDataLength(ExtendedBlock b) throws IOException;
 
   BlockMetricsAsLongs getBlockMetricsReport(String blockPoolId);
-  public void updateBlockMetrics(String blockPoolId);
+  public void updateBlockMetrics(String blockPoolId, Log log);
 
   void resetMetrics(String blockPoolId);
 
@@ -110,6 +111,9 @@ public interface FSDatasetInterface extends FSDatasetMBean {
    */
   @Deprecated
   public Replica getReplica(String bpid, long blockId);
+
+
+  public ReplicaInfo getReplicaInfo(ExtendedBlock block) throws ReplicaNotFoundException;
 
   /**
    * @return replica meta information

@@ -988,9 +988,10 @@ public class DatanodeManager {
             + " because namenode still in startup phase");
         return;
       }*/
-      node.updateMetricsReport(metricsReport.readLoad, metricsReport.writeLoad);
+
+      node.updateFromMetricsReport(metricsReport.readLoad, metricsReport.writeLoad);
       NameNode.stateChangeLog.info(" DATANODE* processMetricsReport: "
-          + "read load on node: " + nodeID +
+          + "read load on node: " + nodeID.getRegistrationID() +
           " is currently " + node.getReadLoad());
 
     } finally {

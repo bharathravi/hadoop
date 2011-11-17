@@ -20,6 +20,7 @@ package org.apache.hadoop.hdfs.server.datanode.metrics;
 import static org.apache.hadoop.hdfs.server.common.Util.now;
 import static org.apache.hadoop.metrics2.impl.MsInfo.SessionId;
 
+import org.apache.commons.logging.Log;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
@@ -63,7 +64,7 @@ public class DataNodeMetrics {
   @Metric MutableCounterLong readsFromRemoteClient;
   @Metric MutableCounterLong writesFromLocalClient;
   @Metric MutableCounterLong writesFromRemoteClient;
-  
+
   @Metric MutableCounterLong volumeFailures;
 
   @Metric MutableRate readBlockOp;
@@ -83,8 +84,8 @@ public class DataNodeMetrics {
     // Too small = too rapidly changing threshold, too large = not quick enough.
     // windowSize * recalculationFrequency gives the total time frame over which a load
     // is calculated. Window size = 1 means load is calculated over the time-period = recalculation frequency.
-    // For now, windowSize = 1.
-    public long windowSizeInSeconds;
+    // For now, windowSize = 3.
+    public long windowSizeInSeconds = 3;
 
     LinkedList<Long> prevReadCounts;
     LinkedList<Long> prevWriteCounts;
@@ -95,7 +96,7 @@ public class DataNodeMetrics {
     public long prevTime;
 
     // How often to recalculate metrics (in seconds).
-   final static int recalculationFrequencyInSeconds = 10;
+    final static int recalculationFrequencyInSeconds = 10;
 
     // Reads per second as of the last {@code windowSizeInSeconds} seconds.
     public double readsPerSecond;
@@ -122,36 +123,49 @@ public class DataNodeMetrics {
       prevTimes.add(now());
     }
 
-    public void advanceWindow() {
+    public void advanceWindow(Log log) {
       long timeNow = now();
       long lastCalculatedTime = prevTimes.getLast();
 
       // Don't recalculate load too often.
       if (timeNow - lastCalculatedTime > recalculationFrequencyInSeconds *1000) {
+        log.info("Updating...");
         long readsNow = 0;
         long writesNow = 0;
+
         if (blocksRead != null) {
           readsNow = blocksRead.value();
         }
 
         if (blocksWritten != null) {
-          readsNow = blocksWritten.value();
+          writesNow = blocksWritten.value();
         }
 
-        prevTime = prevTimes.getFirst();
-        prevReads = prevReadCounts.getFirst();
-        prevWrites = prevWriteCounts.getFirst();
+        log.info("prevReads:" + prevReads + " prev time:" + prevTime
+                      + " readsnow:" + readsNow + " timenow:" + timeNow + " windowsize:" + prevReadCounts.size());
 
-        readsPerSecond = 1000 * (double) (readsNow - prevReads) / (double) (timeNow - prevTime);
-        writesPerSecond = 1000 * (double) (writesNow - prevWrites) / (double) (timeNow - prevTime);
+        if (prevReadCounts.size() >= windowSizeInSeconds) {
+          // If the window has been built up, then calculate load for this window
+          prevTime = prevTimes.getFirst();
+          prevReads = prevReadCounts.getFirst();
+          prevWrites = prevWriteCounts.getFirst();
 
-        // Slide the window, by adding new values and removing old ones
-        if (prevReadCounts.size() >= windowSizeInSeconds/recalculationFrequencyInSeconds) {
+          readsPerSecond = 1000 * (double) (readsNow - prevReads) / (double) (timeNow - prevTime);
+          writesPerSecond = 1000 * (double) (writesNow - prevWrites) / (double) (timeNow - prevTime);
+          log.info("Updating1: readloads:" + readsPerSecond);
+
+          // Slide the window, by adding new values and removing old ones
           prevReadCounts.remove();
           prevWriteCounts.remove();
           prevTimes.remove();
+        } else {
+          // If the window has not yet increased to its max size, current load = total reads/total time
+          readsPerSecond = 1000 * (double) (readsNow - 0) / (double) (timeNow - prevTime);
+          writesPerSecond = 1000 * (double) (writesNow - 0) / (double) (timeNow - prevTime);
+          log.info("Updating: readloads:" + readsPerSecond);
         }
 
+        log.info("Updating old values:");
         prevReadCounts.add(readsNow);
         prevWriteCounts.add(writesNow);
         prevTimes.add(timeNow);
@@ -250,7 +264,7 @@ public class DataNodeMetrics {
   public void incrReadsFromClient(boolean local) {
     (local ? readsFromLocalClient : readsFromRemoteClient).incr();
   }
-  
+
   public void incrVolumeFailures() {
     volumeFailures.incr();
   }

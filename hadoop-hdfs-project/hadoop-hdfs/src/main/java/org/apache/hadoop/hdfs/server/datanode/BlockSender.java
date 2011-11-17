@@ -310,8 +310,10 @@ class BlockSender implements java.io.Closeable {
         blockInFd = null;
       }
 
-      replica.incrNumReads();
-      DataNode.LOG.info("Readcount for replica " + replica + " is now " + replica.getNumReads());
+      ReplicaInfo replicaInfo = getReplicaInfo(block, datanode);
+      replicaInfo.metrics.incrNumReads();
+      DataNode.LOG.info("Readcount for replica " + replica + " is now " +
+          replicaInfo.metrics.getNumReads());
     } catch (IOException ioe) {
       IOUtils.closeStream(this);
       IOUtils.closeStream(blockIn);
@@ -365,6 +367,16 @@ class BlockSender implements java.io.Closeable {
       throws ReplicaNotFoundException {
     Replica replica = datanode.data.getReplica(block.getBlockPoolId(),
         block.getBlockId());
+    if (replica == null) {
+      throw new ReplicaNotFoundException(block);
+    }
+    return replica;
+  }
+
+  private static ReplicaInfo getReplicaInfo(ExtendedBlock block,
+                                            DataNode datanode)
+      throws ReplicaNotFoundException {
+    ReplicaInfo replica = datanode.data.getReplicaInfo(block);
     if (replica == null) {
       throw new ReplicaNotFoundException(block);
     }

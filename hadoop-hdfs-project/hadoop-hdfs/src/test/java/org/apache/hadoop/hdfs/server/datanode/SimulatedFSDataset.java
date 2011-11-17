@@ -30,6 +30,7 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
 
+import org.apache.commons.logging.Log;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
@@ -219,16 +220,6 @@ public class SimulatedFSDataset  implements FSDatasetInterface, Configurable{
     @Override
     synchronized public long getVisibleLength() {
       return getBytesAcked();
-    }
-
-    @Override
-    public void incrNumReads() {
-      //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public long getNumReads() {
-      return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -513,6 +504,11 @@ public class SimulatedFSDataset  implements FSDatasetInterface, Configurable{
     return null;
   }
 
+  @Override
+  public ReplicaInfo getReplicaInfo(ExtendedBlock block) throws ReplicaNotFoundException {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
   @Override 
   public synchronized String getReplicaString(String bpid, long blockId) {
     Replica r = null;
@@ -753,7 +749,7 @@ public class SimulatedFSDataset  implements FSDatasetInterface, Configurable{
   }
 
   @Override
-  public void updateBlockMetrics(String blockPoolId) {
+  public void updateBlockMetrics(String blockPoolId, Log log) {
     // DO nothing..
   }
 
