@@ -810,7 +810,6 @@ class NameNodeRpcServer implements NamenodeProtocols {
            + "from " + nodeReg.getName() + " " + x.getNumberOfBlocks()
            + " blocks and:" + metrics.readLoad + " and: " + metricsReportAsLongs[0]);
 
-
     // Process blockwise metrics.
     namesystem.getBlockManager().processMetricsReport(nodeReg, blockPoolId, x);
 

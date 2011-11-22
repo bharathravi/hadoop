@@ -355,6 +355,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
     dtSecretManager = createDelegationTokenSecretManager(conf);
     this.dir = new FSDirectory(fsImage, this, conf);
     this.safeMode = new SafeModeInfo(conf);
+    LOG.info("Really done.");
   }
 
   void loadFSImage(StartupOption startOpt, FSImage fsImage)

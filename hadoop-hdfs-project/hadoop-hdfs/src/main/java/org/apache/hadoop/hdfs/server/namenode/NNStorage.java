@@ -519,8 +519,12 @@ public class NNStorage extends Storage implements Closeable {
   /** Create new dfs name directory.  Caution: this destroys all files
    * in this filesystem. */
   private void format(StorageDirectory sd) throws IOException {
+
+    LOG.info("Starting format of Storage directory " + sd.getRoot());
     sd.clearDirectory(); // create currrent dir
+    LOG.info("Doing format of Storage directory " + sd.getRoot());
     writeProperties(sd);
+    LOG.info("Still doing format of Storage directory " + sd.getRoot());
     writeTransactionIdFile(sd, 0);
 
     LOG.info("Storage directory " + sd.getRoot()
@@ -531,11 +535,17 @@ public class NNStorage extends Storage implements Closeable {
    * Format all available storage directories.
    */
   public void format(String clusterId) throws IOException {
+    LOG.info("1");
     this.layoutVersion = HdfsConstants.LAYOUT_VERSION;
+    LOG.info("2");
     this.namespaceID = newNamespaceID();
+    LOG.info("3");
     this.clusterID = clusterId;
+    LOG.info("4");
     this.blockpoolID = newBlockPoolID();
+    LOG.info("5");
     this.cTime = 0L;
+    LOG.info("Okay now it really begins.");
     for (Iterator<StorageDirectory> it =
                            dirIterator(); it.hasNext();) {
       StorageDirectory sd = it.next();
@@ -986,12 +996,12 @@ public class NNStorage extends Storage implements Closeable {
     }
     
     int rand = 0;
-    try {
+   /* try {
       rand = SecureRandom.getInstance("SHA1PRNG").nextInt(Integer.MAX_VALUE);
     } catch (NoSuchAlgorithmException e) {
       LOG.warn("Could not use SecureRandom");
       rand = DFSUtil.getRandom().nextInt(Integer.MAX_VALUE);
-    }
+    }*/
     String bpid = "BP-" + rand + "-"+ ip + "-" + System.currentTimeMillis();
     return bpid;
   }

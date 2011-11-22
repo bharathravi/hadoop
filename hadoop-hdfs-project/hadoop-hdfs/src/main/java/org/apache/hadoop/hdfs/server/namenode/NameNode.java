@@ -602,8 +602,13 @@ public class NameNode {
     System.out.println("Formatting using clusterid: " + clusterId);
     
     FSImage fsImage = new FSImage(conf, dirsToFormat, editDirsToFormat);
+
+    System.out.println("Hi. Still around?");
     FSNamesystem fsn = new FSNamesystem(conf, fsImage);
+    System.out.println("Okay you're determined");
     fsImage.format(fsn, clusterId);
+
+    System.out.println("Wokay.");
     return false;
   }
 

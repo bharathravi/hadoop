@@ -143,6 +143,7 @@ public class FSDirectory implements Closeable {
         + " times ");
     nameCache = new NameCache<ByteArray>(threshold);
     namesystem = ns;
+    NameNode.LOG.info("Okay done.");
   }
     
   private FSNamesystem getFSNamesystem() {

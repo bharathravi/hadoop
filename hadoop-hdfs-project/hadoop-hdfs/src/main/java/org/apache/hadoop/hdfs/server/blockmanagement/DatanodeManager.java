@@ -46,6 +46,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor.BlockTargetPair;
 import org.apache.hadoop.hdfs.server.common.Util;
 import org.apache.hadoop.hdfs.server.datanode.metrics.MetricsReport;
+import org.apache.hadoop.hdfs.server.namenode.INodeFile;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.hdfs.server.namenode.Namesystem;
 import org.apache.hadoop.hdfs.server.protocol.BalancerBandwidthCommand;
@@ -80,7 +81,7 @@ public class DatanodeManager {
   /**
    * Stores the datanode -> block map.  
    * <p>
-   * Done by storing a set of {@link DatanodeDescriptor} objects, sorted by 
+   * Done by storing a set of {@link DatanodeDescriptor} objects, sorted by
    * storage id. In order to keep the storage map consistent it tracks 
    * all storages ever registered with the namenode.
    * A descriptor corresponding to a specific storage id can be
@@ -211,7 +212,7 @@ public class DatanodeManager {
 
     for (int i = locations.length-1; i >=0; --i) {
       DatanodeInfo current = locations[i];
-      double threshold = 10;
+      double threshold = 1;
       if (current.getReadLoad() > threshold) {
         int j = i;
         while (j+1<locations.length && locations[j+1].getReadLoad() < threshold) {
@@ -776,6 +777,7 @@ public class DatanodeManager {
       throw new HadoopIllegalArgumentException("Both live and dead lists are null");
     }
 
+
     namesystem.readLock();
     try {
       final List<DatanodeDescriptor> results =
@@ -969,7 +971,9 @@ public class DatanodeManager {
     }
   }
 
-  public void processMetricsReport(DatanodeRegistration nodeID, MetricsReport metricsReport) throws IOException {
+  public void processMetricsReport(DatanodeRegistration nodeID,
+                                   MetricsReport metricsReport)
+      throws IOException {
     namesystem.writeLock();
     final long startTime = Util.now(); //after acquiring write lock
     final long endTime;
@@ -990,6 +994,27 @@ public class DatanodeManager {
       }*/
 
       node.updateFromMetricsReport(metricsReport.readLoad, metricsReport.writeLoad);
+
+        // Check if node is overloaded, if so get block and replicate.
+           if(metricsReport.readLoad>1)
+           {    LOG.info("Overload detected");
+                BlockInfo overloadedBlock=decideBlock(nodeID);
+
+                NumberReplicas number =blockManager.countNodes(overloadedBlock);
+
+                INodeFile inode = blockManager.getINode(overloadedBlock);
+                inode.setReplication((short) (inode.getReplication() + 1));
+
+                blockManager.neededReplications.
+                    add(overloadedBlock, number.liveReplicas(),
+                        number.decommissionedReplicas(),
+                        inode.getReplication());
+                LOG.info("Replication of the overloaded block"
+                    + overloadedBlock.getBlockName()+" has been increased");
+           }
+
+
+      // If readload is above threshold, we need to replicate.
       NameNode.stateChangeLog.info(" DATANODE* processMetricsReport: "
           + "read load on node: " + nodeID.getRegistrationID() +
           " is currently " + node.getReadLoad());
@@ -1000,4 +1025,31 @@ public class DatanodeManager {
     }
 
   }
+    /*This function returns the most heavily loaded block
+    * */
+    public BlockInfo decideBlock(DatanodeRegistration nodeID)
+        throws UnregisteredNodeException {
+
+
+      Iterator<BlockInfo> bMap = getDatanode(nodeID).getBlockIterator();
+      Long max = 0L;
+      Long current = 0L;
+      BlockInfo bInfo;
+
+      BlockInfo bMaxInfo = null;
+      while (bMap.hasNext()) {
+        bInfo = bMap.next();
+        current = bInfo.metrics.window.getReadsPerSecondAsLong();
+
+        if (current > max) {
+          max = current;
+          bMaxInfo = bInfo;
+        }
+
+      }
+
+      return bMaxInfo;
+
+    }
 }
+

@@ -547,7 +547,10 @@ class FSImageFormat {
     void save(File newFile,
               FSImageCompression compression)
       throws IOException {
+
+      LOG.info("Saving...");
       checkNotSaved();
+      LOG.info("Saving2...");
 
       final FSNamesystem sourceNamesystem = context.getSourceNamesystem();
       FSDirectory fsDir = sourceNamesystem.dir;

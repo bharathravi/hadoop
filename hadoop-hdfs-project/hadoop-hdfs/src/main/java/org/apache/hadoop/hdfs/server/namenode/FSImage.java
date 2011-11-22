@@ -133,7 +133,10 @@ public class FSImage implements Closeable {
     Preconditions.checkState(fileCount == 1,
         "FSImage.format should be called with an uninitialized namesystem, has " +
         fileCount + " files");
+    LOG.info("It begins");
     storage.format(clusterId);
+
+    LOG.info("Now it saves");
     saveFSImageInAllDirs(fsn, 0);
   }
   
