@@ -1,9 +1,11 @@
 package org.apache.hadoop.hdfs.server.datanode.metrics;
 
 import org.apache.hadoop.hdfs.protocol.BlockMetricsAsLongs;
+import org.apache.hadoop.hdfs.protocol.NodeMetricsAsLongs;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeCommand;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.nextAfter;
 
 
 /**
@@ -17,44 +19,44 @@ import static java.lang.Math.abs;
  */
 public class MetricsReport {
   public long[] blockMetricsReport;
+  public long[] nodeMetricsReport;
   public double readLoad;
   final static long decimalAccuracy = 1000000;
   public double writeLoad;
 
-  public MetricsReport(DataNodeMetrics metrics, BlockMetricsAsLongs bReport) {
-    blockMetricsReport = bReport.getBlockMetricsListAsLongs();
-    readLoad = metrics.window.getReadsPerSecond();
-    writeLoad = metrics.window.getWritesPerSecond();
+  public MetricsReport(NodeMetricsAsLongs nMetrics, BlockMetricsAsLongs bMetrics) {
+    blockMetricsReport = bMetrics.getBlockMetricsListAsLongs();
+    nodeMetricsReport = nMetrics.getNodeMetricsAsLongs();
   }
 
   public MetricsReport(long[] metricsReport) {
-    blockMetricsReport = new long[metricsReport.length-2];
-    readLoad = (double)metricsReport[0]/(double)decimalAccuracy;
-    writeLoad = (double)metricsReport[1]/(double)decimalAccuracy;
+    blockMetricsReport = new long[metricsReport.length- NodeMetricsAsLongs.LONGS];
+    nodeMetricsReport = new long[NodeMetricsAsLongs.LONGS];
+    for(int i = 0; i < NodeMetricsAsLongs.LONGS; ++i) {
+      blockMetricsReport[i] = metricsReport[i];
+    }
 
-    for(int i = 2; i < metricsReport.length; ++i) {
-      blockMetricsReport[i-2] = metricsReport[i];
+    for(int i = NodeMetricsAsLongs.LONGS; i < metricsReport.length; ++i) {
+      blockMetricsReport[i-NodeMetricsAsLongs.LONGS] = metricsReport[i];
     }
   }
 
   /**
    * This returns a list of long representing the metrics report.
-   * list[0] = a long of the readLoad * 100000 (a double represented with an
-   *   accuracy of 6 decimal places)
-   * list[1-n] = DataBlockMetricsReport.long
+   * This is essentially a concatenation of the block and node metrics reports.
    * @return
    */
   public long[] getReportAsLongs() {
-    long readLoadLong = (long) (readLoad * decimalAccuracy);
-    long writeLoadLong = (long) (writeLoad * decimalAccuracy);
-    int len = blockMetricsReport.length + 2;
+    int len = nodeMetricsReport.length + blockMetricsReport.length;
 
     long[] report = new long[len];
-    report[0] = readLoadLong;
-    report[1] = writeLoadLong;
 
-    for(int i = 0; i < blockMetricsReport.length; ++i) {
-      report[i+2] = blockMetricsReport[i];
+    for (int i = 0; i < nodeMetricsReport.length; ++i) {
+      report[i] = nodeMetricsReport[i];
+    }
+
+    for(int i = nodeMetricsReport.length; i < len; ++i) {
+      report[i - nodeMetricsReport.length] = blockMetricsReport[i];
     }
 
     return report;

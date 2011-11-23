@@ -802,8 +802,11 @@ class NameNodeRpcServer implements NamenodeProtocols {
     verifyRequest(nodeReg);
     MetricsReport metrics = new MetricsReport(metricsReportAsLongs);
 
-    BlockMetricsAsLongs x =
+    BlockMetricsAsLongs blockMetricsAsLongs =
         new BlockMetricsAsLongs(metrics.blockMetricsReport);
+
+    NodeMetricsAsLongs nodeMetricsAsLongs =
+        new NodeMetricsAsLongs(metrics.nodeMetricsReport);
 
 
 //      stateChangeLog.info("*BLOCK* NameNode.metricsReport: "
@@ -811,10 +814,10 @@ class NameNodeRpcServer implements NamenodeProtocols {
 //           + " blocks and:" + metrics.readLoad + " and: " + metricsReportAsLongs[0]);
 
     // Process blockwise metrics.
-    namesystem.getBlockManager().processMetricsReport(nodeReg, blockPoolId, x);
+    namesystem.getBlockManager().processMetricsReport(nodeReg, blockPoolId, blockMetricsAsLongs);
 
     // Process node-wise metrics.
-    namesystem.getBlockManager().getDatanodeManager().processMetricsReport(nodeReg, metrics);
+    namesystem.getBlockManager().getDatanodeManager().processMetricsReport(nodeReg, nodeMetricsAsLongs);
     if (nn.getFSImage().isUpgradeFinalized())
       return new FinalizeCommand(blockPoolId);
     return null;}

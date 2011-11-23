@@ -972,7 +972,7 @@ public class DatanodeManager {
   }
 
   public void processMetricsReport(DatanodeRegistration nodeID,
-                                   MetricsReport metricsReport)
+                                   NodeMetricsAsLongs nMetrics)
       throws IOException {
     namesystem.writeLock();
     final long startTime = Util.now(); //after acquiring write lock
@@ -993,11 +993,11 @@ public class DatanodeManager {
         return;
       }*/
 
-      node.updateFromMetricsReport(metricsReport.readLoad, metricsReport.writeLoad);
+      node.updateFromMetricsReport(nMetrics.readLoad, nMetrics.writeLoad);
 
       // Check if node is overloaded, if so get block and replicate.
       double threshold = 0.07;
-      if(metricsReport.readLoad > threshold)
+      if(nMetrics.readLoad > threshold)
       {
         NameNode.stateChangeLog.info("Overload detected on node " +
             nodeID.getHost());

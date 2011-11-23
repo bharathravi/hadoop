@@ -1119,6 +1119,7 @@ public class FSDataset implements FSDatasetInterface {
             reads.add(b.metrics.getNumReads());
 
           case TEMPORARY:
+            // Don't consider temporary blocks.
             break;
           default:
             assert false : "Illegal ReplicaInfo state.";

@@ -25,6 +25,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
+import org.apache.hadoop.hdfs.protocol.NodeMetricsAsLongs;
 import org.apache.hadoop.metrics2.MetricsSystem;
 import org.apache.hadoop.metrics2.annotation.Metric;
 import org.apache.hadoop.metrics2.annotation.Metrics;
@@ -54,7 +55,7 @@ public class DataNodeMetrics {
 
   @Metric MutableCounterLong bytesWritten;
   @Metric MutableCounterLong bytesRead;
-  @Metric MutableCounterLong blocksWritten;
+  public @Metric MutableCounterLong blocksWritten;
   public @Metric MutableCounterLong blocksRead;
   @Metric MutableCounterLong blocksReplicated;
   @Metric MutableCounterLong blocksRemoved;
@@ -75,6 +76,10 @@ public class DataNodeMetrics {
   @Metric MutableRate heartbeats;
   @Metric MutableRate blockReports;
   public SlidingWindowDatanodeMetrics window;
+
+  public NodeMetricsAsLongs getNodeMetricsAsLongs() {
+    return new NodeMetricsAsLongs(this);
+  }
 
   /**
    *  Approximately maintains the number of read requests per second.
@@ -103,6 +108,7 @@ public class DataNodeMetrics {
 
     // Writes per second as of the last {@code windowSizeInSeconds} seconds.
     public double writesPerSecond;
+    public double readLoadThreshold = 0.07;
 
     public double getReadsPerSecond() {
       return readsPerSecond;
