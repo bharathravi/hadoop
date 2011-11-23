@@ -1033,9 +1033,12 @@ public class DataNode extends Configured
      */
     DatanodeCommand complainAboutLoadWithMetricsReport() throws IOException {
       // send block report if timer has expired.
+
+      LOG.info("Should I complain?");
       DatanodeCommand cmd = null;
       long startTime = now();
       if (isOverloaded()) {
+        LOG.info("Complaining");
         // Create a metrics report consisting of both blockwise and
         // over-all node metrics
         long brCreateStartTime = now();
@@ -1047,6 +1050,8 @@ public class DataNode extends Configured
         cmd = bpNamenode.metricsReport(bpRegistration, blockPoolId,
             metricsReport.getReportAsLongs());
 
+      } else {
+        LOG.info("Not Complaining");
       }
       return cmd;
     }
@@ -1554,6 +1559,7 @@ public class DataNode extends Configured
   private boolean isOverloaded() {
     if (metrics.window.getReadsPerSecond() + metrics.window.getWritesPerSecond()
         > metrics.window.readLoadThreshold) {
+      LOG.info("Overloaded");
       return true;
     }
 

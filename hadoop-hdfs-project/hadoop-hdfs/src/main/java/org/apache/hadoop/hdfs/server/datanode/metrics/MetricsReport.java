@@ -56,7 +56,7 @@ public class MetricsReport {
     }
 
     for(int i = nodeMetricsReport.length; i < len; ++i) {
-      report[i - nodeMetricsReport.length] = blockMetricsReport[i];
+      report[i] = blockMetricsReport[i - nodeMetricsReport.length];
     }
 
     return report;
