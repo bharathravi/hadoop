@@ -1317,6 +1317,7 @@ public class BlockManager {
                             + readCount + " times. current load:" + it.getCurrentReadLoad());
 
             blocksMap.getStoredBlock(b).metrics.setNumReads(readCount);
+            blocksMap.getStoredBlock(b).metrics.window.setReadLoad(it.getCurrentReadLoad());
             count++;
           }
         } finally {

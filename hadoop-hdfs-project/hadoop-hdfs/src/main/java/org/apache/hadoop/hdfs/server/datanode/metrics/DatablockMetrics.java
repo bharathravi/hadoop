@@ -127,5 +127,9 @@ public class DatablockMetrics {
         prevTimes.add(timeNow);
       }
     }
+
+    public void setReadLoad(long currentReadLoad) {
+      readsPerSecond = (double) currentReadLoad/ (double) 1000000;
+    }
   }
 }

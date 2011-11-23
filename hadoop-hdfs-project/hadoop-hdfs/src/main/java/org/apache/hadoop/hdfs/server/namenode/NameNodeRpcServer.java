@@ -806,9 +806,9 @@ class NameNodeRpcServer implements NamenodeProtocols {
         new BlockMetricsAsLongs(metrics.blockMetricsReport);
 
 
-      stateChangeLog.info("*BLOCK* NameNode.metricsReport: "
-           + "from " + nodeReg.getName() + " " + x.getNumberOfBlocks()
-           + " blocks and:" + metrics.readLoad + " and: " + metricsReportAsLongs[0]);
+//      stateChangeLog.info("*BLOCK* NameNode.metricsReport: "
+//           + "from " + nodeReg.getName() + " " + x.getNumberOfBlocks()
+//           + " blocks and:" + metrics.readLoad + " and: " + metricsReportAsLongs[0]);
 
     // Process blockwise metrics.
     namesystem.getBlockManager().processMetricsReport(nodeReg, blockPoolId, x);
