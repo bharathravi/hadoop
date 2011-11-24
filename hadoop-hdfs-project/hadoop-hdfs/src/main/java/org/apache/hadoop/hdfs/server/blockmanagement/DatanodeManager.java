@@ -45,7 +45,6 @@ import org.apache.hadoop.hdfs.protocol.*;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor.BlockTargetPair;
 import org.apache.hadoop.hdfs.server.common.Util;
-import org.apache.hadoop.hdfs.server.datanode.metrics.MetricsReport;
 import org.apache.hadoop.hdfs.server.namenode.INodeFile;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.hdfs.server.namenode.Namesystem;
@@ -984,16 +983,15 @@ public class DatanodeManager {
             + nodeID.getName());
       }
 
-      // To minimize startup time, we discard any second (or later) block reports
-      // that we receive while still in startup phase.
-      /* if (namesystem.isInStartupSafeMode() && node.numBlocks() > 0) {
-        NameNode.stateChangeLog.info("BLOCK* processMetricsReport: "
-            + "discarded non-initial block report from " + nodeID.getName()
-            + " because namenode still in startup phase");
-        return;
-      }*/
+     node.updateFromMetricsReport(nMetrics.readLoad, nMetrics.writeLoad);
 
-      node.updateFromMetricsReport(nMetrics.readLoad, nMetrics.writeLoad);
+      NameNode.stateChangeLog.info(" DATANODE* processMetricsReport: "
+                + "My. God.: " + nMetrics.readLoad + " " + nMetrics.writeLoad);
+
+
+      NameNode.stateChangeLog.info(" DATANODE* processMetricsReport: "
+          + "read load on node: " + nodeID.getHost() +
+          " is currently " + node.getReadLoad());
 
       // Check if node is overloaded, if so get block and replicate.
       double threshold = 0.07;
@@ -1030,10 +1028,6 @@ public class DatanodeManager {
       }
 
 
-
-      NameNode.stateChangeLog.info(" DATANODE* processMetricsReport: "
-          + "read load on node: " + nodeID.getHost() +
-          " is currently " + node.getReadLoad());
 
     } finally {
       endTime = Util.now();

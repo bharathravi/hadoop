@@ -26,8 +26,9 @@ import org.apache.hadoop.hdfs.protocolR23Compatible.ExtendedBlockWritable;
 import org.apache.hadoop.hdfs.protocolR23Compatible.LocatedBlockWritable;
 import org.apache.hadoop.hdfs.protocolR23Compatible.NamespaceInfoWritable;
 import org.apache.hadoop.hdfs.protocolR23Compatible.ProtocolSignatureWritable;
-import org.apache.hadoop.hdfs.server.datanode.metrics.MetricsReport;
+import org.apache.hadoop.hdfs.server.protocol.DatanodeCommand;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeProtocol;
+import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
 import org.apache.hadoop.ipc.ProtocolSignature;
 import org.apache.hadoop.ipc.RPC;
 
@@ -92,12 +93,15 @@ public class DatanodeProtocolServerSideTranslatorR23 implements
         this.getProtocolSignature(protocol, clientVersion, clientMethodsHash));
   }
 
+
   @Override
   public DatanodeCommandWritable blockMetricsReport(DatanodeRegistrationWritable registration,
                                                     String blockPoolId,
-                                                    long[] blockMetrics) throws IOException {
+                                                    long[] blockMetricsListAsLongs,
+                                                    long[] nodeMetricsAsLongs) throws IOException {
      return DatanodeCommandHelper.convert(server.metricsReport(
-        registration.convert(), blockPoolId, blockMetrics));
+        registration.convert(), blockPoolId,
+         blockMetricsListAsLongs, nodeMetricsAsLongs));
   }
 
   @Override

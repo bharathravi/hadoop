@@ -51,7 +51,6 @@ import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifie
 import org.apache.hadoop.hdfs.server.common.IncorrectVersionException;
 import org.apache.hadoop.hdfs.server.common.UpgradeStatusReport;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.NamenodeRole;
-import org.apache.hadoop.hdfs.server.datanode.metrics.MetricsReport;
 import org.apache.hadoop.hdfs.server.namenode.metrics.NameNodeMetrics;
 import org.apache.hadoop.hdfs.server.namenode.web.resources.NamenodeWebHdfsMethods;
 import org.apache.hadoop.hdfs.server.protocol.BlocksWithLocations;
@@ -798,15 +797,15 @@ class NameNodeRpcServer implements NamenodeProtocols {
 @Override
   public DatanodeCommand metricsReport(DatanodeRegistration nodeReg,
                                        String blockPoolId,
-                                       long[] metricsReportAsLongs) throws IOException {
+                                       long[] blockMetricsReportAsLongs,
+                                       long[] nodeMetricsReportAsLongs) throws IOException {
     verifyRequest(nodeReg);
-    MetricsReport metrics = new MetricsReport(metricsReportAsLongs);
 
     BlockMetricsAsLongs blockMetricsAsLongs =
-        new BlockMetricsAsLongs(metrics.blockMetricsReport);
+        new BlockMetricsAsLongs(blockMetricsReportAsLongs);
 
     NodeMetricsAsLongs nodeMetricsAsLongs =
-        new NodeMetricsAsLongs(metrics.nodeMetricsReport);
+        new NodeMetricsAsLongs(nodeMetricsReportAsLongs);
 
 
 //      stateChangeLog.info("*BLOCK* NameNode.metricsReport: "

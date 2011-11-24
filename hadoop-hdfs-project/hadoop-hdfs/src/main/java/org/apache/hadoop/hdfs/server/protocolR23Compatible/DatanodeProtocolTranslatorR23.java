@@ -194,9 +194,11 @@ public class DatanodeProtocolTranslatorR23 implements
   @Override
   public DatanodeCommand metricsReport(DatanodeRegistration bpRegistration,
                                        String blockPoolId,
-                                       long[] blockMetrics) throws IOException {
+                                       long[] blockMetricsAsLongs,
+                                       long[] nodeMetricsAsLongs) throws IOException {
     return rpcProxy.blockMetricsReport(
-        DatanodeRegistrationWritable.convert(bpRegistration), blockPoolId, blockMetrics)
+        DatanodeRegistrationWritable.convert(bpRegistration), blockPoolId,
+        blockMetricsAsLongs, nodeMetricsAsLongs)
         .convert();
   }
 }

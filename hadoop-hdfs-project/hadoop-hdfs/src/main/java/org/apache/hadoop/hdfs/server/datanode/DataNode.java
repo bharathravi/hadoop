@@ -129,7 +129,6 @@ import org.apache.hadoop.hdfs.server.common.Util;
 import org.apache.hadoop.hdfs.server.datanode.FSDataset.VolumeInfo;
 import org.apache.hadoop.hdfs.server.datanode.SecureDataNodeStarter.SecureResources;
 import org.apache.hadoop.hdfs.server.datanode.metrics.DataNodeMetrics;
-import org.apache.hadoop.hdfs.server.datanode.metrics.MetricsReport;
 import org.apache.hadoop.hdfs.server.datanode.web.resources.DatanodeWebHdfsMethods;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.namenode.FileChecksumServlets;
@@ -392,8 +391,9 @@ public class DataNode extends Configured
   Daemon dataXceiverServer = null;
   ThreadGroup threadGroup = null;
   long blockReportInterval;
+  private long complaintReportInterval;
+
   boolean resetBlockReportTime = true;
-  boolean resetBlockMetricsReportTime = true;
   long deleteReportInterval;
   long lastDeletedReport = 0;
   long initialBlockReportDelay = DFS_BLOCKREPORT_INTERVAL_MSEC_DEFAULT * 1000L;
@@ -514,7 +514,8 @@ public class DataNode extends Configured
 
     // TODO(bharath): For testing, send a block report every 10 seconds.
     this.blockReportInterval = 10000; //= conf.getLong(DFS_BLOCKREPORT_INTERVAL_MSEC_KEY,
-    //DFS_BLOCKREPORT_INTERVAL_MSEC_DEFAULT);
+        //DFS_BLOCKREPORT_INTERVAL_MSEC_DEFAULT);
+    this.complaintReportInterval = 10000; //= conf.getLong(DFS_BLOCKREPORT_INTERVAL_MSEC_KEY,
     this.initialBlockReportDelay = conf.getLong(
         DFS_BLOCKREPORT_INITIAL_DELAY_KEY,
         DFS_BLOCKREPORT_INITIAL_DELAY_DEFAULT) * 1000L;
@@ -773,6 +774,8 @@ public class DataNode extends Configured
     DatanodeRegistration bpRegistration;
     NamespaceInfo bpNSInfo;
     long lastBlockReport = 0;
+    private long lastComplaintReport = 0;
+
     private Thread bpThread;
     private DatanodeProtocol bpNamenode;
     private String blockPoolId;
@@ -784,7 +787,7 @@ public class DataNode extends Configured
     private volatile boolean shouldServiceRun = true;
     private boolean isBlockTokenInitialized = false;
     UpgradeManagerDatanode upgradeManager = null;
-    private long lastBlockMetricsReport = 0;
+
 
     BPOfferService(InetSocketAddress isa) {
       this.bpRegistration = new DatanodeRegistration(getMachineName());
@@ -933,6 +936,15 @@ public class DataNode extends Configured
       resetBlockReportTime = true; // reset future BRs for randomness
     }
 
+    /**
+     * This methods  arranges for the data node to send the metrics report at
+     * the next heartbeat.
+     */
+    void scheduleMetricsReport() {
+        lastComplaintReport = lastHeartbeat - complaintReportInterval;
+    }
+
+
     private void reportBadBlocks(ExtendedBlock block) {
       DatanodeInfo[] dnArr = { new DatanodeInfo(bpRegistration) };
       LocatedBlock[] blocks = { new LocatedBlock(block, dnArr) };
@@ -1037,18 +1049,22 @@ public class DataNode extends Configured
       LOG.info("Should I complain?");
       DatanodeCommand cmd = null;
       long startTime = now();
-      if (isOverloaded()) {
+
+      if (isOverloaded() && startTime - lastComplaintReport > complaintReportInterval) {
         LOG.info("Complaining");
         // Create a metrics report consisting of both blockwise and
         // over-all node metrics
         long brCreateStartTime = now();
         BlockMetricsAsLongs bMetrics = data.getBlockMetricsReport(blockPoolId);
-        NodeMetricsAsLongs nMetrics = metrics.getNodeMetricsAsLongs();
-        MetricsReport metricsReport = new MetricsReport(nMetrics, bMetrics);
+        NodeMetricsAsLongs nMetrics = metrics.getNodeMetricsReport();
 
         // Send metrics report
         cmd = bpNamenode.metricsReport(bpRegistration, blockPoolId,
-            metricsReport.getReportAsLongs());
+            bMetrics.getBlockMetricsListAsLongs(),
+            nMetrics.getNodeMetricsAsLongs());
+
+         lastComplaintReport += (now() - lastComplaintReport) /
+              complaintReportInterval * complaintReportInterval;
 
       } else {
         LOG.info("Not Complaining");
@@ -1371,6 +1387,7 @@ public class DataNode extends Configured
 
       // random short delay - helps scatter the BR from all DNs
       scheduleBlockReport(initialBlockReportDelay);
+      scheduleMetricsReport();
     }
 
     /**

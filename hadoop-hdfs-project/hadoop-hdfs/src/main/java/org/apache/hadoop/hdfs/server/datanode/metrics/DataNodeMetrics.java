@@ -77,7 +77,7 @@ public class DataNodeMetrics {
   @Metric MutableRate blockReports;
   public SlidingWindowDatanodeMetrics window;
 
-  public NodeMetricsAsLongs getNodeMetricsAsLongs() {
+  public NodeMetricsAsLongs getNodeMetricsReport() {
     return new NodeMetricsAsLongs(this);
   }
 

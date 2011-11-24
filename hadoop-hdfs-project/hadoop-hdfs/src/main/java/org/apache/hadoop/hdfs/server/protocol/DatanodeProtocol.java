@@ -26,7 +26,6 @@ import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.protocol.DatanodeID;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocolR23Compatible.ClientNamenodeWireProtocol;
-import org.apache.hadoop.hdfs.server.datanode.metrics.MetricsReport;
 import org.apache.hadoop.hdfs.server.protocolR23Compatible.DatanodeWireProtocol;
 import org.apache.hadoop.ipc.VersionedProtocol;
 import org.apache.hadoop.security.KerberosInfo;
@@ -185,5 +184,7 @@ public interface DatanodeProtocol extends VersionedProtocol {
       boolean closeFile, boolean deleteblock, DatanodeID[] newtargets
       ) throws IOException;
 
-  DatanodeCommand metricsReport(DatanodeRegistration bpRegistration, String blockPoolId, long[] blockMetricsListAsLongs) throws IOException;
+  public DatanodeCommand metricsReport(DatanodeRegistration bpRegistration, String blockPoolId,
+                                long[] blockMetricsListAsLongs,
+                                long[] nodeMetricsAsLongs) throws IOException;
 }

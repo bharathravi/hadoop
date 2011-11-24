@@ -34,16 +34,16 @@ import java.util.Iterator;
 @InterfaceStability.Evolving
 public class NodeMetricsAsLongs  {
   /**
-   * A node metric has 5 longs
+   * A node metric has 4 longs
    *   total reads, total writes, current read load and
    *   current write load.
    */
-  public static final int LONGS = 5;
+  public static final int LONGS = 4;
 
   private long[] nodeMetricsAsLongs = new long[LONGS];
   private static final double PRECISION = 100000;
-  public long readLoad;
-  public long writeLoad;
+  public double readLoad;
+  public double writeLoad;
   public long totalReads;
   public long totalWrites;
 
@@ -58,21 +58,24 @@ public class NodeMetricsAsLongs  {
     // set the readcount
     totalReads = metrics.blocksRead.value();
     totalWrites = metrics.blocksWritten.value();
-    readLoad = (long) (metrics.window.getReadsPerSecond() * PRECISION);
-    writeLoad = (long) (metrics.window.getWritesPerSecond() * PRECISION);
+    readLoad = metrics.window.getReadsPerSecond();
+    writeLoad = metrics.window.getWritesPerSecond();
   }
 
   public NodeMetricsAsLongs(long[] nodeMetricsReport) {
     nodeMetricsAsLongs = nodeMetricsReport;
-    readLoad = nodeMetricsReport[0];
-    writeLoad = nodeMetricsReport[1];
+
+    // Convert from double to long.
+    readLoad = (double) nodeMetricsReport[0]/PRECISION;
+    writeLoad = (double) nodeMetricsReport[1]/PRECISION;
     totalReads = nodeMetricsReport[2];
     totalWrites = nodeMetricsReport[3];
   }
 
   public long[] getNodeMetricsAsLongs() {
-    nodeMetricsAsLongs[0] = readLoad;
-    nodeMetricsAsLongs[1] = writeLoad;
+    // Convert back from long to double.
+    nodeMetricsAsLongs[0] = (long) (readLoad * PRECISION);
+    nodeMetricsAsLongs[1] = (long) (writeLoad * PRECISION);
     nodeMetricsAsLongs[2] = totalReads;
     nodeMetricsAsLongs[3] = totalWrites;
     return nodeMetricsAsLongs;

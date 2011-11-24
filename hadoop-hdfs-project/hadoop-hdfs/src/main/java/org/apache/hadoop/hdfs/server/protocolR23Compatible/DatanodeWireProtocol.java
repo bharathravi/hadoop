@@ -31,7 +31,6 @@ import org.apache.hadoop.hdfs.protocolR23Compatible.ExtendedBlockWritable;
 import org.apache.hadoop.hdfs.protocolR23Compatible.LocatedBlockWritable;
 import org.apache.hadoop.hdfs.protocolR23Compatible.NamespaceInfoWritable;
 import org.apache.hadoop.hdfs.protocolR23Compatible.ProtocolSignatureWritable;
-import org.apache.hadoop.hdfs.server.datanode.metrics.MetricsReport;
 import org.apache.hadoop.ipc.VersionedProtocol;
 import org.apache.hadoop.security.KerberosInfo;
 
@@ -182,6 +181,8 @@ public interface DatanodeWireProtocol extends VersionedProtocol {
   public ProtocolSignatureWritable getProtocolSignature2(String protocol,
       long clientVersion, int clientMethodsHash) throws IOException;
 
-  DatanodeCommandWritable blockMetricsReport(DatanodeRegistrationWritable convert,
-                                             String blockPoolId, long[] blockMetrics) throws IOException;
+  public DatanodeCommandWritable blockMetricsReport(DatanodeRegistrationWritable convert,
+                                             String blockPoolId,
+                                             long[] blockMetricsAsLongs,
+                                             long[] nodeMetricsAsLongs) throws IOException;
 }
