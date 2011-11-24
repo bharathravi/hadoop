@@ -55,6 +55,7 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
 
   /** Number of longs in the header */
   private static final int HEADER_SIZE = 1;
+  private static final double PRECISION = 1000000;
 
   /**
    * Returns the index of the first long in blockList
@@ -90,7 +91,8 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
     for (int i = 0; i < replicaSize; i++) {
       setBlock(i, replicas.get(i),
           replicas.get(i).metrics.getNumReads(),
-          replicas.get(i).metrics.window.getReadsPerSecondAsLong());
+          (long)(replicas.get(i)
+              .metrics.window.getReadsPerSecond() * PRECISION));
     }
   }
 
@@ -142,8 +144,8 @@ public class BlockMetricsAsLongs implements Iterable<Block> {
       return readCounts(currentBlockIndex);
     }
 
-    public long getCurrentReadLoad() {
-      return readLoad(currentBlockIndex);
+    public double getCurrentReadLoad() {
+      return (double) readLoad(currentBlockIndex) / PRECISION;
     }
 
     public void remove() {

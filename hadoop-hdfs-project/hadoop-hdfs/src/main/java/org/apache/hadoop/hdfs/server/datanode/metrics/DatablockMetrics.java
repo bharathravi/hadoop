@@ -84,10 +84,6 @@ public class DatablockMetrics {
       return readsPerSecond;
     }
 
-    public Long getReadsPerSecondAsLong() {
-      return (long)(readsPerSecond*1000000);
-    }
-
     SlidingWindowBlockMetrics() {
       readsPerSecond = 0;
       prevReadCounts = new LinkedList<Long>();
@@ -128,8 +124,8 @@ public class DatablockMetrics {
       }
     }
 
-    public void setReadLoad(long currentReadLoad) {
-      readsPerSecond = (double) currentReadLoad/ (double) 1000000;
+    public void setReadLoad(double currentReadLoad) {
+      readsPerSecond = currentReadLoad;
     }
   }
 }

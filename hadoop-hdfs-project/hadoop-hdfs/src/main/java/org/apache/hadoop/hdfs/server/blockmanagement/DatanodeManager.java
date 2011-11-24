@@ -1026,9 +1026,6 @@ public class DatanodeManager {
           LOG.info("Replication NOT needed for block " + overloadedBlock.getBlockName());
         }
       }
-
-
-
     } finally {
       endTime = Util.now();
       namesystem.writeUnlock();
