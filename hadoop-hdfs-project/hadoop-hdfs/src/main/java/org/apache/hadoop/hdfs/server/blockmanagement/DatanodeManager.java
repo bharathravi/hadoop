@@ -1068,8 +1068,8 @@ public class DatanodeManager {
       throws UnregisteredNodeException {
 
     Iterator<BlockInfo> bMap = getDatanode(nodeID).getBlockIterator();
-    Long max = 0L;
-    Long current = 0L;
+    double max = 0;
+    double current;
     BlockInfo bInfo;
 
     BlockInfo bMaxInfo = null;
@@ -1077,7 +1077,7 @@ public class DatanodeManager {
     LOG.info("Blocks on the culprit node:" + bMap.hasNext());
     while (bMap.hasNext()) {
       bInfo = bMap.next();
-      current = bInfo.metrics.window.getReadsPerSecondAsLong();
+      current = bInfo.metrics.window.getReadsPerSecond();
       LOG.info("Load on the culprit block:" + current);
 
       if (current > max) {
