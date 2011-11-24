@@ -1084,11 +1084,9 @@ public class DatanodeManager {
         max = current;
         bMaxInfo = bInfo;
       }
-
     }
 
     return bMaxInfo;
-
   }
 }
 

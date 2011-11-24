@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hdfs.server.datanode.metrics;
 
+import static org.apache.hadoop.hdfs.DFSConfigKeys.*;
 import static org.apache.hadoop.hdfs.server.common.Util.now;
 import static org.apache.hadoop.metrics2.impl.MsInfo.SessionId;
 
@@ -118,8 +119,9 @@ public class DataNodeMetrics {
       return writesPerSecond;
     }
 
-    SlidingWindowDatanodeMetrics() {
+    SlidingWindowDatanodeMetrics(double loadThreshold) {
       readsPerSecond = 0;
+      readLoadThreshold = loadThreshold;
       prevReadCounts = new LinkedList<Long>();
       prevWriteCounts = new LinkedList<Long>();
 
@@ -182,9 +184,9 @@ public class DataNodeMetrics {
   final MetricsRegistry registry = new MetricsRegistry("datanode");
   final String name;
 
-  public DataNodeMetrics(String name, String sessionId) {
+  public DataNodeMetrics(String name, String sessionId, double loadThreshold) {
     this.name = name;
-    this.window = new SlidingWindowDatanodeMetrics();
+    this.window = new SlidingWindowDatanodeMetrics(loadThreshold);
     registry.tag(SessionId, sessionId);
   }
 
@@ -194,7 +196,12 @@ public class DataNodeMetrics {
     JvmMetrics.create("DataNode", sessionId, ms);
     String name = "DataNodeActivity-"+ (dnName.isEmpty()
         ? "UndefinedDataNodeName"+ DFSUtil.getRandom().nextInt() : dnName.replace(':', '-'));
-    return ms.register(name, null, new DataNodeMetrics(name, sessionId));
+
+    double loadThreshold = Double.parseDouble(conf.get(
+        DFS_DATANODE_LOAD_THRESHOLD,
+        DFS_DATANODE_LOAD_THRESHOLD_DEFAULT));
+
+    return ms.register(name, null, new DataNodeMetrics(name, sessionId, loadThreshold));
   }
 
   public String name() { return name; }
