@@ -936,14 +936,6 @@ public class DataNode extends Configured
       resetBlockReportTime = true; // reset future BRs for randomness
     }
 
-    /**
-     * This methods  arranges for the data node to send the metrics report at
-     * the next heartbeat.
-     */
-    void scheduleMetricsReport() {
-        lastComplaintReport = lastHeartbeat - complaintReportInterval;
-    }
-
 
     private void reportBadBlocks(ExtendedBlock block) {
       DatanodeInfo[] dnArr = { new DatanodeInfo(bpRegistration) };
@@ -1050,7 +1042,15 @@ public class DataNode extends Configured
       DatanodeCommand cmd = null;
       long startTime = now();
 
-      if (isOverloaded() && startTime - lastComplaintReport > complaintReportInterval) {
+      if (isOverloaded()) {
+         if (startTime - lastComplaintReport < complaintReportInterval) {
+           // If we complained recently, don't complain again
+           LOG.info("Recent complaint less than " + complaintReportInterval + "s ago" +
+               " . Not complaining");
+           return cmd;
+         }
+
+        lastComplaintReport = startTime;
         LOG.info("Complaining");
         // Create a metrics report consisting of both blockwise and
         // over-all node metrics
@@ -1387,7 +1387,6 @@ public class DataNode extends Configured
 
       // random short delay - helps scatter the BR from all DNs
       scheduleBlockReport(initialBlockReportDelay);
-      scheduleMetricsReport();
     }
 
     /**

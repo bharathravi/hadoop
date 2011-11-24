@@ -1043,6 +1043,7 @@ public class DatanodeManager {
     // This will be taken care off anyway. Don't replicate further.
     INodeFile inode = blockManager.getINode(overloadedBlock);
     if (number.liveReplicas() < inode.getReplication()) {
+      LOG.info("Replicas being created. Don't replicate");
       return false;
     }
 
@@ -1056,6 +1057,7 @@ public class DatanodeManager {
       if (node.getReadLoad() < threshold) {
         // If we find even one node below the threshold, we expect
         // the load balancer to take care of this.
+        LOG.info("Enough replicas. Don't replicate");
         return false;
       }
     }
