@@ -34,11 +34,11 @@ import java.util.Iterator;
 @InterfaceStability.Evolving
 public class NodeMetricsAsLongs  {
   /**
-   * A node metric has 4 longs
+   * A node metric has 5 longs
    *   total reads, total writes, current read load and
-   *   current write load.
+   *   current write load and a threshold value.
    */
-  public static final int LONGS = 4;
+  public static final int LONGS = 5;
 
   private long[] nodeMetricsAsLongs = new long[LONGS];
   private static final double PRECISION = 100000;
@@ -46,6 +46,7 @@ public class NodeMetricsAsLongs  {
   public double writeLoad;
   public long totalReads;
   public long totalWrites;
+  public double threshold;
 
   /**
    * Create a node metrics report.
@@ -60,24 +61,27 @@ public class NodeMetricsAsLongs  {
     totalWrites = metrics.blocksWritten.value();
     readLoad = metrics.window.getReadsPerSecond();
     writeLoad = metrics.window.getWritesPerSecond();
+    threshold = metrics.window.readLoadThreshold;
   }
 
   public NodeMetricsAsLongs(long[] nodeMetricsReport) {
     nodeMetricsAsLongs = nodeMetricsReport;
 
     // Convert from double to long.
-    readLoad = (double) nodeMetricsReport[0]/PRECISION;
-    writeLoad = (double) nodeMetricsReport[1]/PRECISION;
-    totalReads = nodeMetricsReport[2];
-    totalWrites = nodeMetricsReport[3];
+    threshold = (double) nodeMetricsReport[0]/PRECISION;
+    readLoad = (double) nodeMetricsReport[1]/PRECISION;
+    writeLoad = (double) nodeMetricsReport[2]/PRECISION;
+    totalReads = nodeMetricsReport[3];
+    totalWrites = nodeMetricsReport[4];
   }
 
   public long[] getNodeMetricsAsLongs() {
     // Convert back from long to double.
-    nodeMetricsAsLongs[0] = (long) (readLoad * PRECISION);
-    nodeMetricsAsLongs[1] = (long) (writeLoad * PRECISION);
-    nodeMetricsAsLongs[2] = totalReads;
-    nodeMetricsAsLongs[3] = totalWrites;
+    nodeMetricsAsLongs[0] = (long) (threshold * PRECISION);
+    nodeMetricsAsLongs[1] = (long) (readLoad * PRECISION);
+    nodeMetricsAsLongs[2] = (long) (writeLoad * PRECISION);
+    nodeMetricsAsLongs[3] = totalReads;
+    nodeMetricsAsLongs[4] = totalWrites;
     return nodeMetricsAsLongs;
   }
 }

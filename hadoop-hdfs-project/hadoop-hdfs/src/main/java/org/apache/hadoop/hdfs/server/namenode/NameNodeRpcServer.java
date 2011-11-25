@@ -813,10 +813,12 @@ class NameNodeRpcServer implements NamenodeProtocols {
 //           + " blocks and:" + metrics.readLoad + " and: " + metricsReportAsLongs[0]);
 
     // Process blockwise metrics.
-    namesystem.getBlockManager().processMetricsReport(nodeReg, blockPoolId, blockMetricsAsLongs);
+    namesystem.getBlockManager()
+        .processMetricsReport(nodeReg, blockPoolId, blockMetricsAsLongs);
 
     // Process node-wise metrics.
-    namesystem.getBlockManager().getDatanodeManager().processMetricsReport(nodeReg, nodeMetricsAsLongs);
+    namesystem.getBlockManager()
+        .getDatanodeManager().processMetricsReport(nodeReg, nodeMetricsAsLongs);
     if (nn.getFSImage().isUpgradeFinalized())
       return new FinalizeCommand(blockPoolId);
     return null;}

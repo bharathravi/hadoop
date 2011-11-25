@@ -57,12 +57,17 @@ public class DatanodeInfo extends DatanodeID implements Node {
     return readLoad;
   }
 
+  public double getThreshold() {
+    return threshold;
+  }
+
   public void setReadLoad(double readLoad) {
     this.readLoad = readLoad;
   }
 
   protected double readLoad;
   protected double writeLoad;
+  protected double threshold;
 
   protected String location = NetworkTopology.DEFAULT_RACK;
 

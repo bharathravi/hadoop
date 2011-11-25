@@ -32,6 +32,7 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.HadoopIllegalArgumentException;
@@ -973,69 +974,74 @@ public class DatanodeManager {
   public void processMetricsReport(DatanodeRegistration nodeID,
                                    NodeMetricsAsLongs nMetrics)
       throws IOException {
-    namesystem.writeLock();
-    final long startTime = Util.now(); //after acquiring write lock
-    final long endTime;
-    try {
-      final DatanodeDescriptor node = getDatanode(nodeID);
-      if (node == null || !node.isAlive) {
-        throw new IOException("ProcessMetricsReport from dead or unregistered node: "
-            + nodeID.getName());
-      }
-
-     node.updateFromMetricsReport(nMetrics.readLoad, nMetrics.writeLoad);
-
-      NameNode.stateChangeLog.info(" DATANODE* processMetricsReport: "
-                + "My. God.: " + nMetrics.readLoad + " " + nMetrics.writeLoad);
-
-
-      NameNode.stateChangeLog.info(" DATANODE* processMetricsReport: "
-          + "read load on node: " + nodeID.getHost() +
-          " is currently " + node.getReadLoad());
-
-      // Check if node is overloaded, if so get block and replicate.
-      double threshold = 0.07;
-      if(nMetrics.readLoad > threshold)
-      {
-        NameNode.stateChangeLog.info("Overload detected on node " +
-            nodeID.getHost());
-
-        BlockInfo overloadedBlock=decideBlock(nodeID);
-        NameNode.stateChangeLog.info("Block " +
-            overloadedBlock + " is the chosen one.");
-
-        // Check if we really need to replicate.
-        if (isReplicationNeeded(overloadedBlock, threshold)) {
-          LOG.info("Replication needed for block " + overloadedBlock.getBlockName());
-          NumberReplicas number = blockManager.countNodes(overloadedBlock);
-
-          INodeFile inode = blockManager.getINode(overloadedBlock);
-          inode.setReplication((short) (inode.getReplication() + 1));
-
-          NameNode.stateChangeLog.info("Live:" + number.liveReplicas()
-              + " decom:" + number.decommissionedReplicas() +
-              " replic:" + inode.getReplication());
-
-          blockManager.neededReplications.
-              add(overloadedBlock, number.liveReplicas(),
-                  number.decommissionedReplicas(),
-                  inode.getReplication());
-          NameNode.stateChangeLog.info("Replication of the overloaded block"
-              + overloadedBlock.getBlockName()+" has been increased");
-        } else {
-          LOG.info("Replication NOT needed for block " + overloadedBlock.getBlockName());
-        }
-      }
-    } finally {
-      endTime = Util.now();
-      namesystem.writeUnlock();
+    final DatanodeDescriptor node = getDatanode(nodeID);
+    if (node == null || !node.isAlive) {
+      throw new IOException("ProcessMetricsReport from dead or unregistered node: "
+          + nodeID.getName());
     }
 
+    namesystem.writeLock();
+    node.updateFromMetricsReport(nMetrics);
+    namesystem.writeUnlock();
+
+    NameNode.stateChangeLog.info(" DATANODE* processMetricsReport: "
+        + "read load on node: " + nodeID.getHost() +
+        " is currently " + node.getReadLoad());
+
+    takeActionOnOverload(nodeID, node);
   }
 
-  private boolean isReplicationNeeded(BlockInfo overloadedBlock,
-                                      double threshold) {
+  /**
+   * Check whether there is an overload on this node, and take appropriate
+   * action if so.
+   * @param nodeID
+   * @param node
+   * @throws UnregisteredNodeException
+   */
+  private void takeActionOnOverload(DatanodeRegistration nodeID, DatanodeDescriptor node)
+      throws UnregisteredNodeException {
+    // Check if node is overloaded, if so get block and replicate
+    if(node.isOverloaded()) {
+      NameNode.stateChangeLog.info("Overload detected on node " +
+          nodeID.getHost());
+
+      List<BlockInfo> overloadedBlocks = decideBlock(node, nodeID);
+      NameNode.stateChangeLog.info("Block " +
+          overloadedBlocks + " are the chosen ones.");
+
+      for (BlockInfo block: overloadedBlocks) {
+        // Check if we really need to replicate.
+        if (isReplicationNeeded(block)) {
+          increaseReplicationForBlock(block);
+        } else {
+          LOG.info("Replication NOT needed for block " + block.getBlockName());
+        }
+      }
+    }
+  }
+
+  private void increaseReplicationForBlock(BlockInfo block) {
+    LOG.info("Replication needed for block " + block.getBlockName());
+    NumberReplicas number = blockManager.countNodes(block);
+
+    INodeFile inode = blockManager.getINode(block);
+    inode.setReplication((short) (inode.getReplication() + 1));
+
+    NameNode.stateChangeLog.info("Live:" + number.liveReplicas()
+        + " decom:" + number.decommissionedReplicas() +
+        " replic:" + inode.getReplication());
+
+    blockManager.neededReplications.
+        add(block, number.liveReplicas(),
+            number.decommissionedReplicas(),
+            inode.getReplication());
+    NameNode.stateChangeLog.info("Replication of the overloaded block"
+        + block.getBlockName()+" has been increased");
+  }
+
+  private boolean isReplicationNeeded(BlockInfo overloadedBlock) {
     NumberReplicas number = blockManager.countNodes(overloadedBlock);
+
     // If the number of live replicas < number of expected replicas,
     // This will be taken care off anyway. Don't replicate further.
     INodeFile inode = blockManager.getINode(overloadedBlock);
@@ -1049,12 +1055,13 @@ public class DatanodeManager {
     // In this case we expect the load balancer to take care of fair
     // distribution, and not create more replicas.
     Iterator<DatanodeDescriptor> nodes = blockManager.blocksMap.nodeIterator(overloadedBlock);
+    LOG.info("Looking at replicas: " + nodes);
     while(nodes.hasNext()) {
       DatanodeDescriptor node = nodes.next();
-      if (node.getReadLoad() < threshold) {
+      if (node.getReadLoad() < node.getThreshold() || node.getReadLoad() == 0) {
         // If we find even one node below the threshold, we expect
         // the load balancer to take care of this.
-        LOG.info("Enough replicas. Don't replicate");
+        LOG.info("Enough replicas. Don't replicate." + node.getHost());
         return false;
       }
     }
@@ -1062,31 +1069,53 @@ public class DatanodeManager {
     return true;
   }
 
-  /*This function returns the most heavily loaded block
- * */
-  public BlockInfo decideBlock(DatanodeRegistration nodeID)
+  /* This function returns a list of most loaded blocks on the datanode,
+   * that are enough to bring the load on the datanode below the threshold.
+   */
+  public List<BlockInfo> decideBlock(DatanodeDescriptor node, DatanodeRegistration nodeID)
       throws UnregisteredNodeException {
 
+    List<BlockInfo> overloadedBlocks = Lists.newArrayList();
+
     Iterator<BlockInfo> bMap = getDatanode(nodeID).getBlockIterator();
-    double max = 0;
-    double current;
-    BlockInfo bInfo;
+    BlockInfo thisBlock;
 
-    BlockInfo bMaxInfo = null;
-
+    double expectedLoad = node.getReadLoad();
     LOG.info("Blocks on the culprit node:" + bMap.hasNext());
-    while (bMap.hasNext()) {
-      bInfo = bMap.next();
-      current = bInfo.metrics.window.getReadsPerSecond();
-      LOG.info("Load on the culprit block:" + current);
 
-      if (current > max) {
-        max = current;
-        bMaxInfo = bInfo;
+    // Pick the topmost blocks that are contributing to the readload,
+    // and return these as the culprit blocks.
+    // We pick just enough blocks to get the expected load on the node
+    // below the threshold
+    while (expectedLoad > node.getThreshold()) {
+      double maxLoad = 0;
+      double currentLoad;
+      BlockInfo mostLoadedBlock = null;
+
+      while (bMap.hasNext()) {
+        thisBlock = bMap.next();
+        if (!overloadedBlocks.contains(thisBlock)) {
+          currentLoad = thisBlock.metrics.window.getReadsPerSecond();
+          LOG.info("Load on the culprit block:" + currentLoad);
+
+          if (currentLoad > maxLoad) {
+            maxLoad = currentLoad;
+            mostLoadedBlock = thisBlock;
+          }
+        }
+      }
+
+      if (mostLoadedBlock != null) {
+        overloadedBlocks.add(mostLoadedBlock);
+        expectedLoad -= mostLoadedBlock.metrics.window.getReadsPerSecond();
+      } else {
+        // No block was found, quit.
+        break;
       }
     }
 
-    return bMaxInfo;
+    LOG.info("Picking blocks: " + overloadedBlocks);
+    return overloadedBlocks;
   }
 }
 

@@ -34,6 +34,7 @@ import org.apache.hadoop.hdfs.DeprecatedUTF8;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.DatanodeID;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
+import org.apache.hadoop.hdfs.protocol.NodeMetricsAsLongs;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 
@@ -52,6 +53,10 @@ public class DatanodeDescriptor extends DatanodeInfo {
   // Stores status of decommissioning.
   // If node is not decommissioning, do not use this object for anything.
   public DecommissioningStatus decommissioningStatus = new DecommissioningStatus();
+
+  public boolean isOverloaded() {
+    return readLoad > threshold;
+  }
 
   /** Block and targets pair */
   @InterfaceAudience.Private
@@ -298,9 +303,10 @@ public class DatanodeDescriptor extends DatanodeInfo {
   /**
    * Updates stats received from a metrics report from a datanode
    */
-  public void updateFromMetricsReport(double readLoad, double writeLoad) {
-    this.readLoad = readLoad;
-    this.writeLoad = writeLoad;
+  public void updateFromMetricsReport(NodeMetricsAsLongs nMetrics) {
+    this.readLoad = nMetrics.readLoad;
+    this.writeLoad = nMetrics.writeLoad;
+    this.threshold = nMetrics.threshold;
   }
 
   /**
